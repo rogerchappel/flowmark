@@ -1,63 +1,63 @@
 # flowmark
-
-Local-first linting and outline generation for agent runbooks.
-
-`flowmark` checks Markdown or YAML runbooks for the sections agents need before
-they execute work: goal, inputs, boundaries, steps, verification, rollback, and
-done criteria. It can also render a normalized JSON outline for handoff tools.
-
+A local-first workflow linter and outline renderer for agent runbooks.
 ## Status
 
-This repository is early-stage. Confirm the current support, release, and
-security posture before using it in production.
+This is a v0.1.0 local-first developer tool. Treat the CLI and output formats as early-stage, pin versions in automation, and run the verification commands below before relying on it in CI.
+## What it helps with
 
-## Install
+- Work with agent, workflow, runbook, markdown, yaml workflows from a local checkout.
+- Keep generated artifacts and reports inspectable on disk instead of sending project data to a service.
+- Add a repeatable smoke command that maintainers can run before review or release.
 
-Install dependencies and build locally:
+## Install from a checkout
 
 ```sh
+git clone https://github.com/rogerchappel/flowmark.git
+cd flowmark
 npm install
 npm run build
 ```
+## CLI quickstart
 
-## Use
-
-Lint a Markdown runbook:
-
-```sh
-node dist/cli.js lint fixtures/good.md
-```
-
-Render a machine-readable outline:
+Start with the built CLI help so the examples match the checked-out version:
 
 ```sh
-node dist/cli.js outline fixtures/good.md --out tmp/outline.json
+node dist/cli.js --help
 ```
-
-Create a starter runbook:
+Run the maintained smoke fixture to exercise the main workflow end to end:
 
 ```sh
-node dist/cli.js init --template oss-factory > FLOW.md
+npm run smoke
 ```
 
-## Verify
-
-Run the local validation script before opening a pull request:
+The smoke command currently expands to:
 
 ```sh
-bash scripts/validate.sh
+npm run build && bash scripts/smoke.sh
+```
+## Verification
+
+```sh
+npm run check
+npm test
+npm run smoke
+npm run package:smoke
+npm run release:check
 ```
 
-`scripts/validate.sh` runs the repository's standard local checks when they are defined and will also run `agent-qc ready` when `agent-qc` is installed. Missing `agent-qc` is treated as a skip, not a failure.
+## Limitations
+
+- The project is intentionally local-first; it does not manage remote credentials or upload repository contents.
+- Output schemas and CLI flags may change before a stable 1.0 release.
+- Review generated files before committing them, especially when they summarize logs, diffs, or dependency metadata.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution expectations. Changes
-should be small, reviewable, and verified before review.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Keep changes small, include a fixture or smoke case when behavior changes, and paste verification output into the pull request.
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for vulnerability reporting guidance.
+See [SECURITY.md](SECURITY.md) for vulnerability reporting. Do not paste secrets, private tokens, or proprietary logs into issues or examples.
 
 ## License
 
