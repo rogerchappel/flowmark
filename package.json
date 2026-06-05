@@ -18,7 +18,8 @@
     "dist",
     "fixtures",
     "README.md",
-    "docs/PRD.md"
+    "docs/PRD.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -49,5 +50,13 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.9.1",
     "typescript": "^6.0.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rogerchappel/flowmark.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rogerchappel/flowmark/issues"
+  },
+  "homepage": "https://github.com/rogerchappel/flowmark#readme"
 }
