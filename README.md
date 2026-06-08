@@ -43,7 +43,12 @@ npm test
 npm run smoke
 npm run package:smoke
 npm run release:check
+npm run validate
 ```
+
+`release:check` runs the workflow linter, tests, fixture smoke coverage, and a
+dry-run package check. `validate` wraps the repository hygiene script for a
+single local pre-PR gate.
 
 ## Limitations
 
