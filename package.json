@@ -19,7 +19,8 @@
     "fixtures",
     "README.md",
     "docs/PRD.md",
-    "LICENSE"
+    "LICENSE",
+    "SECURITY.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
