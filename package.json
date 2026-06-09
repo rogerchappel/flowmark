@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "flowmark": "./dist/cli.js"
+    "flowmark": "dist/cli.js"
   },
   "exports": {
     ".": {
@@ -19,7 +19,8 @@
     "fixtures",
     "README.md",
     "docs/PRD.md",
-    "LICENSE"
+    "LICENSE",
+    "SECURITY.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
