@@ -62,3 +62,8 @@ See [SECURITY.md](SECURITY.md) for vulnerability reporting. Do not paste secrets
 ## License
 
 MIT
+
+Release verification scripts not already covered above:
+
+- `npm run lint` - node scripts/lint.mjs
+- `npm run test` - npm run build && node --test tests/*.test.mjs
