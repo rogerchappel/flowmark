@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Release readiness: document local verification, npm package metadata, and pack contents for the next public release.
+- Security maintenance: update `js-yaml` to a fixed release with a clean npm audit.
 
 All notable changes to this project will be documented in this file.
 
