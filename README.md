@@ -47,8 +47,10 @@ npm run validate
 ```
 
 `release:check` runs the workflow linter, tests, fixture smoke coverage, and a
-dry-run package check. `validate` wraps the repository hygiene script for a
-single local pre-PR gate.
+package contents check. The package smoke builds the distribution and fails if
+the CLI, public API, type declarations, maintained fixtures, release docs,
+license, security policy, or changelog would be missing from the npm tarball.
+`validate` wraps the repository hygiene script for a single local pre-PR gate.
 
 ## Limitations
 
