@@ -19,6 +19,12 @@ npm run build
 ```
 ## CLI quickstart
 
+Confirm the built CLI is available:
+
+```sh
+node dist/cli.js --version
+```
+
 Start with the built CLI help so the examples match the checked-out version:
 
 ```sh
