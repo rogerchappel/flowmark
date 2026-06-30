@@ -1,58 +1,114 @@
 #!/usr/bin/env node
-import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
-import { Command } from 'commander';
-import { lintRunbook, parseRunbook, createOutline } from './index.js';
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
+import { createOutline, lintRunbook, parseRunbook } from "./index.js";
 
-const program = new Command();
+interface ParsedArgs {
+  command?: string;
+  file?: string;
+  out?: string;
+  template?: string;
+  help: boolean;
+  json: boolean;
+}
 
-program
-  .name('flowmark')
-  .description('Lint agent runbooks and render execution outlines.')
-  .version('0.1.0');
+export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
+  try {
+    const args = parseArgs(argv);
 
-program
-  .command('lint')
-  .argument('<file>', 'Markdown or YAML runbook')
-  .action(async (file: string) => {
-    const result = await lintRunbook(file);
-    for (const message of result.messages) {
-      console.log(`${message.severity.toUpperCase()} ${message.code} ${file}:${message.line}:${message.column} ${message.message}`);
+    if (args.help || !args.command) {
+      process.stdout.write(helpText());
+      return 0;
     }
-    if (result.ok) console.log(`${file}: ok`);
-    process.exitCode = result.ok ? 0 : 1;
-  });
 
-program
-  .command('outline')
-  .argument('<file>', 'Markdown or YAML runbook')
-  .option('--out <path>', 'Write JSON outline to a file')
-  .action(async (file: string, options: { out?: string }) => {
-    const outline = createOutline(await parseRunbook(file));
-    const json = `${JSON.stringify(outline, null, 2)}\n`;
-    if (options.out) {
-      await mkdir(dirname(options.out), { recursive: true });
-      await writeFile(options.out, json, 'utf8');
+    if (args.command === "lint") {
+      const file = requireFile(args);
+      const result = await lintRunbook(file);
+      process.stdout.write(args.json ? `${JSON.stringify(result, null, 2)}\n` : renderLint(result));
+      return result.ok ? 0 : 1;
+    }
+
+    if (args.command === "outline") {
+      const file = requireFile(args);
+      const outline = createOutline(await parseRunbook(file));
+      const body = `${JSON.stringify(outline, null, 2)}\n`;
+      if (args.out) {
+        await mkdir(dirname(args.out), { recursive: true });
+        await writeFile(args.out, body);
+      } else {
+        process.stdout.write(body);
+      }
+      return 0;
+    }
+
+    if (args.command === "init") {
+      process.stdout.write(await renderTemplate(args.template ?? "default"));
+      return 0;
+    }
+
+    throw new Error(`Unknown command: ${args.command}`);
+  } catch (error) {
+    process.stderr.write(`flowmark: ${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+}
+
+function parseArgs(argv: string[]): ParsedArgs {
+  const [command, ...rest] = argv;
+  const args: ParsedArgs = { command, help: false, json: false };
+
+  for (let index = 0; index < rest.length; index += 1) {
+    const token = rest[index];
+    if (token === "--help" || token === "-h") {
+      args.help = true;
+    } else if (token === "--json") {
+      args.json = true;
+    } else if (token === "--out" || token === "-o") {
+      args.out = requireValue(rest, (index += 1), token);
+    } else if (token === "--template") {
+      args.template = requireValue(rest, (index += 1), token);
+    } else if (!token.startsWith("-") && !args.file) {
+      args.file = token;
     } else {
-      process.stdout.write(json);
+      throw new Error(`Unknown option: ${token}`);
     }
-  });
+  }
 
-program
-  .command('init')
-  .option('--template <name>', 'Template name', 'default')
-  .action((options: { template: string }) => {
-    process.stdout.write(renderTemplate(options.template));
-  });
+  return args;
+}
 
-program.parseAsync().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+function requireValue(argv: string[], index: number, option: string): string {
+  const value = argv[index];
+  if (!value || value.startsWith("-")) {
+    throw new Error(`${option} requires a value`);
+  }
+  return value;
+}
 
-function renderTemplate(template: string): string {
-  const title = template === 'oss-factory' ? 'OSS Factory Runbook' : 'Runbook';
-  return `# ${title}
+function requireFile(args: ParsedArgs): string {
+  if (!args.file) {
+    throw new Error(`${args.command} requires a runbook path`);
+  }
+  return args.file;
+}
+
+function renderLint(result: Awaited<ReturnType<typeof lintRunbook>>): string {
+  if (result.ok) {
+    return `${result.file}: ok\n`;
+  }
+
+  const messages = result.messages.map(
+    (message) => `${result.file}:${message.line}:${message.column} ${message.severity} ${message.code} - ${message.message}`
+  );
+  return `${messages.join("\n")}\n`;
+}
+
+async function renderTemplate(name: string): Promise<string> {
+  if (name === "oss-factory") {
+    return readFile(new URL("../fixtures/good.md", import.meta.url), "utf8");
+  }
+
+  return `# Workflow Title
 
 ## Goal
 
@@ -60,28 +116,45 @@ Describe the intended outcome.
 
 ## Inputs
 
-- Repository, issue, or artifact to inspect.
+- Input artifact or system.
 
 ## Boundaries
 
-- Do not touch secrets or production data.
+- State what must not be changed.
 
 ## Steps
 
-- Inspect the current state.
-- Make the smallest safe change.
-- Review the diff.
+- Run the smallest useful check.
 
 ## Verification
 
-- Run the relevant local checks.
+- Record the command and result.
 
 ## Rollback
 
-- Revert the branch or discard the worktree.
+- Describe how to undo the change.
 
 ## Done Criteria
 
-- The change is reviewed, verified, and ready for handoff.
+- Checks pass and review notes are complete.
 `;
+}
+
+function helpText(): string {
+  return `flowmark
+
+Usage:
+  flowmark lint <runbook> [--json]
+  flowmark outline <runbook> [--out FILE]
+  flowmark init [--template oss-factory]
+
+Commands:
+  lint      Validate required runbook sections and safety notes.
+  outline   Render a normalized JSON execution outline.
+  init      Print a starter runbook template.
+`;
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  process.exitCode = await main();
 }
