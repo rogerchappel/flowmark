@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Release readiness: add CLI `--version` coverage to tests, smoke checks, and package dry-run validation.
 - Release readiness: document local verification, npm package metadata, and pack contents for the next public release.
 - Security maintenance: update `js-yaml` to a fixed release with a clean npm audit.
 

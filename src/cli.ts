@@ -3,6 +3,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { createOutline, lintRunbook, parseRunbook } from "./index.js";
 
+const VERSION = "0.1.0";
+
 interface ParsedArgs {
   command?: string;
   file?: string;
@@ -10,11 +12,17 @@ interface ParsedArgs {
   template?: string;
   help: boolean;
   json: boolean;
+  version: boolean;
 }
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   try {
     const args = parseArgs(argv);
+
+    if (args.version) {
+      process.stdout.write(`${VERSION}\n`);
+      return 0;
+    }
 
     if (args.help || !args.command) {
       process.stdout.write(helpText());
@@ -54,13 +62,16 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
-  const [command, ...rest] = argv;
-  const args: ParsedArgs = { command, help: false, json: false };
+  const command = argv[0]?.startsWith("-") ? undefined : argv[0];
+  const rest = command ? argv.slice(1) : argv;
+  const args: ParsedArgs = { command, help: false, json: false, version: false };
 
   for (let index = 0; index < rest.length; index += 1) {
     const token = rest[index];
     if (token === "--help" || token === "-h") {
       args.help = true;
+    } else if (token === "--version" || token === "-v") {
+      args.version = true;
     } else if (token === "--json") {
       args.json = true;
     } else if (token === "--out" || token === "-o") {
@@ -147,6 +158,7 @@ Usage:
   flowmark lint <runbook> [--json]
   flowmark outline <runbook> [--out FILE]
   flowmark init [--template oss-factory]
+  flowmark --version
 
 Commands:
   lint      Validate required runbook sections and safety notes.

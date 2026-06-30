@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { execFile } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { lintRunbook, parseRunbook, createOutline } from '../dist/index.js';
 
@@ -24,4 +25,11 @@ test('outline command writes a JSON outline', async () => {
   const outline = createOutline(await parseRunbook('fixtures/good.md'));
   assert.equal(outline.title, 'Release Prep');
   assert.equal(outline.doneCriteria[0], 'Checks pass and notes are ready for review.');
+});
+
+test('version flag prints the package version', async () => {
+  const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
+  const { stdout } = await execFileAsync('node', ['dist/cli.js', '--version']);
+
+  assert.equal(stdout, `${packageJson.version}\n`);
 });
