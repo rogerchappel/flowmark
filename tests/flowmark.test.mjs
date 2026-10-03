@@ -27,6 +27,19 @@ test('outline command writes a JSON outline', async () => {
   assert.equal(outline.doneCriteria[0], 'Checks pass and notes are ready for review.');
 });
 
+test('CLI reports missing values for --out and --template', async () => {
+  for (const [command, option] of [['outline', '--out'], ['init', '--template']]) {
+    await assert.rejects(
+      execFileAsync('node', ['dist/cli.js', command, option]),
+      (error) => {
+        assert.equal(error.code, 1);
+        assert.match(error.stderr, new RegExp(`${option} requires a value`));
+        return true;
+      },
+    );
+  }
+});
+
 test('version flag prints the package version', async () => {
   const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
   const { stdout } = await execFileAsync('node', ['dist/cli.js', '--version']);
