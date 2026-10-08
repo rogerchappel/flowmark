@@ -13,6 +13,17 @@ test('lintRunbook accepts a complete Markdown runbook', async () => {
   assert.deepEqual(result.messages, []);
 });
 
+test('Markdown headings inside fenced code are not parsed as sections or steps', async () => {
+  const { parseMarkdownRunbook } = await import('../dist/index.js');
+  const parsed = parseMarkdownRunbook('runbook.md', [
+    '# Runbook', '## Steps', '### Real step', '```md', '## Fake section',
+    '### Fake step', '```', '## Notes', 'Keep this section.'
+  ].join('\n'));
+
+  assert.deepEqual(parsed.sections.map(({ title }) => title), ['Steps', 'Notes']);
+  assert.deepEqual(parsed.steps.map(({ title }) => title), ['Real step']);
+});
+
 test('lintRunbook reports missing sections and risky commands', async () => {
   const result = await lintRunbook('fixtures/incomplete.md');
   assert.equal(result.ok, false);

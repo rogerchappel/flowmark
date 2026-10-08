@@ -42,15 +42,33 @@ export function parseMarkdownRunbook(path: string, raw: string): RunbookDocument
 function collectHeadings(raw: string): HeadingSpan[] {
   const headings: HeadingSpan[] = [];
   const pattern = /^(#{1,6})\s+(.+?)\s*#*\s*$/gm;
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(raw)) !== null) {
-    headings.push({
-      depth: match[1].length,
-      title: match[2].trim(),
-      line: lineForOffset(raw, match.index),
-      start: match.index,
-      end: pattern.lastIndex
-    });
+  const lines = raw.split(/(?<=\n)/);
+  let offset = 0;
+  let fence: { marker: string; length: number } | undefined;
+
+  for (const line of lines) {
+    const content = line.replace(/\r?\n$/, '');
+    const fenceMatch = /^ {0,3}(`{3,}|~{3,})/.exec(content);
+    if (fence) {
+      if (fenceMatch && fenceMatch[1][0] === fence.marker && fenceMatch[1].length >= fence.length) {
+        fence = undefined;
+      }
+    } else if (fenceMatch) {
+      fence = { marker: fenceMatch[1][0], length: fenceMatch[1].length };
+    } else {
+      pattern.lastIndex = 0;
+      const match = pattern.exec(content);
+      if (match) {
+        headings.push({
+          depth: match[1].length,
+          title: match[2].trim(),
+          line: lineForOffset(raw, offset),
+          start: offset,
+          end: offset + content.length
+        });
+      }
+    }
+    offset += line.length;
   }
   return headings;
 }
